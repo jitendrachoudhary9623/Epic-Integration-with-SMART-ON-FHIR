@@ -1,0 +1,107 @@
+{
+  "fields": [
+    {
+      "fieldname": "givenName",
+      "label": "Given Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "validations": [
+        { "type": "min", "params": 1, "message": "Given name is required" },
+        { "type": "max", "params": 50, "message": "Given name must be less than 50 characters" },
+        { "type": "regex", "params": "^[a-zA-Z-'. ]+$", "message": "Given name contains invalid characters" }
+      ]
+    },
+    {
+      "fieldname": "familyName",
+      "label": "Family Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "validations": [
+        { "type": "min", "params": 1, "message": "Family name is required" },
+        { "type": "max", "params": 50, "message": "Family name must be less than 50 characters" },
+        { "type": "regex", "params": "^[a-zA-Z-'. ]+$", "message": "Family name contains invalid characters" }
+      ]
+    },
+    {
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "gender",
+      "label": "Gender",
+      "fieldtype": "Select",
+      "options": ["male", "female", "other"],
+      "reqd": 1,
+      "validations": [
+        { "type": "enum", "params": ["male", "female", "other"], "message": "Gender is required" }
+      ]
+    },
+    {
+      "fieldname": "birthDate",
+      "label": "Date of Birth",
+      "fieldtype": "Date",
+      "reqd": 1,
+      "validations": [
+        {
+           "type": "custom",
+           "params": "date => { const birthDate = new Date(date); const today = new Date(); return birthDate < today && (today.getFullYear() - birthDate.getFullYear()) <= 120; }",
+          "message": "Invalid date of birth"
+        }
+      ]
+    },
+    {
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "phone",
+      "label": "Phone",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "validations": [
+        { "type": "regex", "params": "^\\+?[0-9()\\-\\.\\s]{7,15}$", "message": "Invalid phone number format" }
+      ]
+    },
+    {
+      "fieldname": "email",
+      "label": "Email",
+      "fieldtype": "Data",
+      "validations": [
+        { "type": "email", "message": "Invalid email format" }
+      ]
+    },
+    {
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "addressLine1",
+      "label": "Address Line",
+      "fieldtype": "Data",
+      "validations": [
+        { "type": "min", "params": 1, "message": "Address line is required" }
+      ]
+    },
+    {
+      "fieldname": "city",
+      "label": "City",
+      "fieldtype": "Data",
+      "validations": [
+        { "type": "min", "params": 1, "message": "City is required" }
+      ]
+    },
+    {
+      "fieldname": "state",
+      "label": "State",
+      "fieldtype": "Data",
+      "validations": [
+        { "type": "min", "params": 1, "message": "State is required" }
+      ]
+    },
+    {
+      "fieldname": "postalCode",
+      "label": "Postal Code",
+      "fieldtype": "Data",
+      "validations": [
+        { "type": "min", "params": 1, "message": "Postal code is required" }
+      ]
+    }
+  ]
+}
