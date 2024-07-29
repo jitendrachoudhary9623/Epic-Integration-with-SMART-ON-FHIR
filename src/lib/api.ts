@@ -46,7 +46,7 @@ export const fetchPatientMedications = async (patientId: string, accessToken: st
     const data = await response.json();
     return data.entry ? data.entry.map((e: any) => e.resource) : [];
   };
-  
+
 export const fetchPatientAppointments = async (patientId: string, accessToken: string) => {
   const response = await fetch(`${FHIR_BASE_URL}/Appointment?patient=${patientId}&status=booked`, {
     headers: {
@@ -78,3 +78,35 @@ export const fetchPatientLabReports = async (patientId: string, accessToken: str
     const data = await response.json();
     return data.entry ? data.entry.map((e: any) => e.resource) : [];
   };
+
+  export const fetchPatientEncounters = async (patientId: string, accessToken: string) => {
+    const response = await fetch(`${FHIR_BASE_URL}/Encounter?patient=${patientId}&_sort=-date&_count=10`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/fhir+json'
+      }
+    });
+  
+    if (!response.ok) {
+      throw new Error('Failed to fetch patient encounters');
+    }
+  
+    const data = await response.json();
+    return data.entry ? data.entry.map((e: any) => e.resource) : [];
+  };
+
+  export const fetchPatientProcedures = async (patientId: string, accessToken: string) => {
+    const response = await fetch(`${FHIR_BASE_URL}/Procedure?patient=${patientId}&_sort=-date&_count=10`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/fhir+json'
+      }
+    });
+  
+    if (!response.ok) {
+      throw new Error('Failed to fetch patient procedures');
+    }
+  
+    const data = await response.json();
+    return data.entry ? data.entry.map((e: any) => e.resource) : [];
+  }

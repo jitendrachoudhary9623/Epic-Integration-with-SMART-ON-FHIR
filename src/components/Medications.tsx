@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Pill, Calendar, Clock, AlertCircle, ChevronDown, ChevronUp, User, Repeat, Package, Hospital } from 'lucide-react';
 import { MedicationRequest } from 'fhir/r4';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MedicationCardProps {
   medication: MedicationRequest;
@@ -37,44 +41,43 @@ const MedicationCard: React.FC<MedicationCardProps> = ({ medication }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out">
-      <div className="p-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-semibold text-indigo-600">{getMedicationName()}</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              {medication.dosageInstruction?.[0]?.text || 'No dosage information available'}
-            </p>
-          </div>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(medication.status || 'unknown')}`}>
+    <Card className="mb-4">
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <span className="text-lg font-semibold text-blue-700">{getMedicationName()}</span>
+          <Badge variant="outline" className={getStatusColor(medication.status || 'unknown')}>
             {medication.status}
-          </span>
-        </div>
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-gray-600 mb-3">
+          {medication.dosageInstruction?.[0]?.text || 'No dosage information available'}
+        </p>
         
-        <div className="mt-4 flex items-center text-sm text-gray-500">
+        <div className="flex items-center text-sm text-gray-500 mb-2">
           <Clock className="h-4 w-4 mr-2" />
           <span>{medication.dosageInstruction?.[0]?.timing?.code?.text || 'Timing not specified'}</span>
         </div>
         
         {medication.authoredOn && (
-          <div className="mt-2 flex items-center text-sm text-gray-500">
+          <div className="flex items-center text-sm text-gray-500 mb-3">
             <Calendar className="h-4 w-4 mr-2" />
             <span>Prescribed: {formatDate(medication.authoredOn)}</span>
           </div>
         )}
         
-        <button 
+        <Button 
+          variant="outline"
           onClick={() => setIsExpanded(!isExpanded)} 
-          className="mt-4 flex items-center text-indigo-600 hover:text-indigo-800 transition-colors duration-200"
+          className="w-full justify-center"
         >
           {isExpanded ? 'Less details' : 'More details'}
           {isExpanded ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />}
-        </button>
-      </div>
+        </Button>
       
-      {isExpanded && (
-        <div className="px-4 pb-4 bg-gray-50">
-          <div className="pt-4 border-t border-gray-200">
+        {isExpanded && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
             <h4 className="text-sm font-medium text-gray-900 mb-2">Additional Information</h4>
             <ul className="space-y-2 text-sm text-gray-600">
               <li className="flex items-center">
@@ -94,26 +97,26 @@ const MedicationCard: React.FC<MedicationCardProps> = ({ medication }) => {
                 Quantity: {medication.dispenseRequest?.quantity?.value} {medication.dispenseRequest?.quantity?.unit}
               </li>
             </ul>
+          
+            {medication.reasonCode && medication.reasonCode.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Reason for Medication</h4>
+                <p className="text-sm text-gray-600">{medication.reasonCode[0].text}</p>
+              </div>
+            )}
+          
+            {medication.note && medication.note.length > 0 && (
+              <div className="mt-4 p-2 bg-yellow-50 rounded-md">
+                <p className="text-xs text-yellow-800 flex items-start">
+                  <AlertCircle className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
+                  <span>{medication.note[0].text}</span>
+                </p>
+              </div>
+            )}
           </div>
-          
-          {medication.reasonCode && medication.reasonCode.length > 0 && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">Reason for Medication</h4>
-              <p className="text-sm text-gray-600">{medication.reasonCode[0].text}</p>
-            </div>
-          )}
-          
-          {medication.note && medication.note.length > 0 && (
-            <div className="mt-4 p-2 bg-yellow-50 rounded-md">
-              <p className="text-xs text-yellow-800 flex items-start">
-                <AlertCircle className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
-                <span>{medication.note[0].text}</span>
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
@@ -123,19 +126,23 @@ interface MedicationsProps {
 
 const Medications: React.FC<MedicationsProps> = ({ medications }) => {
   return (
-    <div className="bg-gradient-to-r from-purple-100 to-indigo-100 p-6 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold text-indigo-800 mb-6 flex items-center">
+    <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg shadow-lg">
+      <h2 className="text-2xl font-bold text-blue-800 mb-6 flex items-center">
         <Pill className="mr-2" /> Your Medications
       </h2>
-      <div className="space-y-6">
+      <ScrollArea className="h-[600px] pr-4">
         {medications.length > 0 ? (
           medications.map((medication, index) => (
             <MedicationCard key={index} medication={medication} />
           ))
         ) : (
-          <p className="text-gray-600 text-center py-4">No current medications</p>
+          <Card>
+            <CardContent className="flex items-center justify-center h-32">
+              <p className="text-gray-600">No current medications</p>
+            </CardContent>
+          </Card>
         )}
-      </div>
+      </ScrollArea>
     </div>
   );
 };

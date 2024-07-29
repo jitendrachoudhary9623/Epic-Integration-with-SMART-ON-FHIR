@@ -1,11 +1,12 @@
 'use client'
 
 import { Inter } from 'next/font/google'
-import { useEffect, useState } from 'react'
 import Sidebar from '@/components/Sidebar'
 import TopBar from '@/components/TopBar'
 import Login from '@/components/Login'
 import './globals.css'
+import  useAuth  from '@/hooks/useAuth'
+import useLayoutManager  from '@/hooks/useLayoutManager'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -14,23 +15,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      const token = localStorage.getItem('access_token') // or any other key you use for authentication
-      setIsLoggedIn(!!token)
-    }
-
-    checkLoginStatus()
-    
-    // Optional: Add event listener for storage changes
-    window.addEventListener('storage', checkLoginStatus)
-
-    return () => {
-      window.removeEventListener('storage', checkLoginStatus)
-    }
-  }, [])
+  const { isLoggedIn } = useAuth()
+  const { showSidebar, showTopBar, toggleSidebar, toggleTopBar } = useLayoutManager(isLoggedIn)
 
   if (!isLoggedIn) {
     return (
@@ -46,10 +32,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <div className="flex h-screen bg-gray-100">
-          {/* <Sidebar /> */}
+          {/* {showSidebar && <Sidebar />} */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* <TopBar /> */}
-            <main className="flex-1 overflow-x-hidden overflow-y-auto p-4">
+            {/* {showTopBar && <TopBar toggleSidebar={toggleSidebar} />} */}
+            <main className="flex-1 overflow-x-hidden overflow-y-auto">
               {children}
             </main>
           </div>

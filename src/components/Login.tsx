@@ -1,105 +1,21 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Lock, Hospital } from 'lucide-react';
-import pkceChallenge from 'pkce-challenge';
-
-const SMART_AUTH_URL = process.env.NEXT_PUBLIC_SMART_AUTH_URL || '';
-const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID || '';
-const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || '';
-const FHIR_BASE_URL = process.env.NEXT_PUBLIC_FHIR_BASE_URL || '';
-const TOKEN_ENDPOINT = process.env.NEXT_PUBLIC_SMART_TOKEN_URL || '';
+import { useSmartAuth } from '@/hooks/useSmartAuth';
+import { useAuthCallback } from '@/hooks/useAuthCallback';
 
 const Login = () => {
   const [status, setStatus] = useState<string>('');
-  const [isProcessingAuth, setIsProcessingAuth] = useState<boolean>(false);
-
-  const generateRedirectUrl = useCallback(async () => {
-    const authorizationUrl = new URL(SMART_AUTH_URL);
-    const state = crypto.randomUUID(); // Using built-in UUID generation
-    const { code_challenge, code_verifier } = await pkceChallenge();
-
-    authorizationUrl.searchParams.set('client_id', CLIENT_ID);
-    authorizationUrl.searchParams.set('scope', 'openid fhirUser');
-    authorizationUrl.searchParams.set('redirect_uri', REDIRECT_URI);
-    authorizationUrl.searchParams.set('response_type', 'code');
-    authorizationUrl.searchParams.set('state', state);
-    authorizationUrl.searchParams.set('aud', FHIR_BASE_URL);
-    authorizationUrl.searchParams.set('code_challenge', code_challenge);
-    authorizationUrl.searchParams.set('code_challenge_method', 'S256');
-    
-    sessionStorage.setItem('auth_state', state);
-    sessionStorage.setItem('code_verifier', code_verifier);
-
-    return authorizationUrl.toString();
-  }, []); // No dependencies needed here
-
-  const handleLogin = async () => {
-    const redirectUrl = await generateRedirectUrl();
-    window.location.href = redirectUrl;
-  };
-
-  const verifyStateAndExchangeToken = useCallback(async (code: string, state: string) => {
-    setStatus('Verifying...');
-
-    const storedState = sessionStorage.getItem('auth_state');
-    if (state !== storedState) {
-      setStatus('Error: Invalid state');
-      return;
-    }
-
-    const codeVerifier = sessionStorage.getItem('code_verifier');
-    if (!codeVerifier) {
-      setStatus('Error: Code verifier not found');
-      return;
-    }
-
-    try {
-      const response = await fetch(TOKEN_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code: code,
-          client_id: CLIENT_ID,
-          redirect_uri: REDIRECT_URI,
-          code_verifier: codeVerifier
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to exchange code for token');
-      }
-
-      const tokens = await response.json();
-      
-      localStorage.setItem('access_token', tokens.access_token);
-      localStorage.setItem('id_token', tokens.id_token);
-      localStorage.setItem('patient', tokens.patient);
-      localStorage.setItem('expires_in', tokens.expires_in);
-      localStorage.setItem('scope', tokens.scope);
-
-      sessionStorage.removeItem('auth_state');
-      sessionStorage.removeItem('code_verifier');
-
-      setStatus('Login successful!');
-      
-      // Redirect to the main application page or dashboard
-      setTimeout(() => window.location.href = '/dashboard', 2000);
-    } catch (error) {
-      console.log({ error, TOKEN_ENDPOINT });
-      console.error('Token exchange error:', error);
-      setStatus('Error: Failed to exchange code for token');
-    }
-  }, []); // No dependencies needed here
+  const { handleLogin } = useSmartAuth();
+  const { verifyStateAndExchangeToken, isProcessingAuth } = useAuthCallback(setStatus);
+  const authInitiated = useRef(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
 
-    if (code && state && !isProcessingAuth) {
-      setIsProcessingAuth(true);
+    if (code && state && !isProcessingAuth && !authInitiated.current) {
+      authInitiated.current = true;
       verifyStateAndExchangeToken(code, state);
     }
   }, [verifyStateAndExchangeToken, isProcessingAuth]);

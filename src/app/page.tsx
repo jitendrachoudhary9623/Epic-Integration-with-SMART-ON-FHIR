@@ -1,11 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import Dashboard from '@/components/Dashboard';
 
-
-
-
-export default function PatientListPage() {
-  return <>
-Hello</>
+export default function DashboardPage() {
+  return <Dashboard />;
 }
