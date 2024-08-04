@@ -1,4 +1,7 @@
+import { Medication, MedicationRequest } from "fhir/r4";
+
 const FHIR_BASE_URL = process.env.NEXT_PUBLIC_FHIR_BASE_URL || '';
+
 
 export const fetchPatientData = async (patientId: string, accessToken: string) => {
   const response = await fetch(`${FHIR_BASE_URL}/Patient/${patientId}`, {
@@ -16,7 +19,7 @@ export const fetchPatientData = async (patientId: string, accessToken: string) =
 };
 
 export const fetchPatientMedications = async (patientId: string, accessToken: string) => {
-    const response = await fetch(`${FHIR_BASE_URL}/MedicationRequest?patient=${patientId}&status=active&_sort=-date&_count=10`, {
+    const response = await fetch(`${FHIR_BASE_URL}/MedicationRequest?subject=${patientId}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Accept': 'application/fhir+json'
@@ -27,8 +30,10 @@ export const fetchPatientMedications = async (patientId: string, accessToken: st
       throw new Error('Failed to fetch patient medications');
     }
   
-    const data = await response.json();
-    return data.entry ? data.entry.map((e: any) => e.resource) : [];
+    let data = await response.json();
+    data = data.entry ? data.entry.map((e: any) => e.resource) : []
+    data = data.filter((med: MedicationRequest) => med.resourceType === 'MedicationRequest');
+    return data;
   };
   
   export const fetchPatientVitals = async (patientId: string, accessToken: string) => {
