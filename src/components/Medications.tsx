@@ -52,7 +52,7 @@ const MedicationCard: React.FC<MedicationCardProps> = ({ medication }) => {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-600 mb-3">
-          {medication.dosageInstruction?.[0]?.text || 'No dosage information available'}
+          Dosage: {medication.dosageInstruction?.[0]?.text || 'No dosage information available'}
         </p>
         
         <div className="flex items-center text-sm text-gray-500 mb-2">

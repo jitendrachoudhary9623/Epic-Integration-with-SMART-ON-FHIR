@@ -2,6 +2,11 @@ import { Calendar, Pill, Activity, FileText } from 'lucide-react';
 
 export const tabConfig = [
   {
+    id: 'overview',
+    label: 'Summary',
+    icon: FileText,
+  },
+  {
     id: 'appointments',
     label: 'Appointments',
     icon: Calendar,

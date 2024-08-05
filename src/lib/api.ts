@@ -1,4 +1,4 @@
-import { Medication, MedicationRequest } from "fhir/r4";
+import { Encounter, Medication, MedicationRequest, Observation, Procedure } from "fhir/r4";
 
 const FHIR_BASE_URL = process.env.NEXT_PUBLIC_FHIR_BASE_URL || '';
 
@@ -37,7 +37,7 @@ export const fetchPatientMedications = async (patientId: string, accessToken: st
   };
   
   export const fetchPatientVitals = async (patientId: string, accessToken: string) => {
-    const response = await fetch(`${FHIR_BASE_URL}/Observation?patient=${patientId}&category=vital-signs&_sort=-date&_count=10`, {
+    const response = await fetch(`${FHIR_BASE_URL}/Observation?patient=${patientId}&category=vital-signs&_sort=-date`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Accept': 'application/fhir+json'
@@ -48,8 +48,10 @@ export const fetchPatientMedications = async (patientId: string, accessToken: st
       throw new Error('Failed to fetch patient vitals');
     }
   
-    const data = await response.json();
-    return data.entry ? data.entry.map((e: any) => e.resource) : [];
+    let data = await response.json();
+    data = data.entry ? data.entry.map((e: any) => e.resource) : []
+    data = data.filter((med: Observation) => med.resourceType === 'Observation');
+    return data;
   };
 
 export const fetchPatientAppointments = async (patientId: string, accessToken: string) => {
@@ -69,7 +71,7 @@ export const fetchPatientAppointments = async (patientId: string, accessToken: s
 
 // Add more API functions as needed for your application
 export const fetchPatientLabReports = async (patientId: string, accessToken: string) => {
-    const response = await fetch(`${FHIR_BASE_URL}/Observation?patient=${patientId}&category=laboratory&_sort=-date&_count=10`, {
+    const response = await fetch(`${FHIR_BASE_URL}/Observation?patient=${patientId}&category=laboratory&_sort=-date`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Accept': 'application/fhir+json'
@@ -80,8 +82,10 @@ export const fetchPatientLabReports = async (patientId: string, accessToken: str
       throw new Error('Failed to fetch patient lab reports');
     }
   
-    const data = await response.json();
-    return data.entry ? data.entry.map((e: any) => e.resource) : [];
+    let data = await response.json();
+    data = data.entry ? data.entry.map((e: any) => e.resource) : []
+    data = data.filter((med: Observation) => med.resourceType === 'Observation');
+    return data;
   };
 
   export const fetchPatientEncounters = async (patientId: string, accessToken: string) => {
@@ -96,8 +100,10 @@ export const fetchPatientLabReports = async (patientId: string, accessToken: str
       throw new Error('Failed to fetch patient encounters');
     }
   
-    const data = await response.json();
-    return data.entry ? data.entry.map((e: any) => e.resource) : [];
+    let data = await response.json();
+    data = data.entry ? data.entry.map((e: any) => e.resource) : []
+    data = data.filter((med: Encounter) => med.resourceType === 'Encounter');
+    return data;
   };
 
   export const fetchPatientProcedures = async (patientId: string, accessToken: string) => {
@@ -112,6 +118,8 @@ export const fetchPatientLabReports = async (patientId: string, accessToken: str
       throw new Error('Failed to fetch patient procedures');
     }
   
-    const data = await response.json();
-    return data.entry ? data.entry.map((e: any) => e.resource) : [];
+    let data = await response.json();
+    data = data.entry ? data.entry.map((e: any) => e.resource) : []
+    data = data.filter((med: Procedure) => med.resourceType === 'Procedure');
+    return data;
   }
