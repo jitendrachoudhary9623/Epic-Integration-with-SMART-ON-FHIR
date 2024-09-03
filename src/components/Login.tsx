@@ -7,14 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useLocalStorageEMR } from '@/hooks/useLocalStorageEMR';
 
 const HealthJourneyPortal = () => {
-  const [selectedEMR, setSelectedEMR] = useState('');
+  // const [selectedEMR, setSelectedEMR] = useState('');
   const [status, setStatus] = useState('');
-  const { handleLogin } = useSmartAuth();
   const { verifyStateAndExchangeToken, isProcessingAuth } = useAuthCallback(setStatus);
   const [stage, setStage] = useState(0);
   const authInitiated = useRef(false);
+  const [emrSystems, selectedEMR, setSelectedEMR] = useLocalStorageEMR();
+  const { handleLogin } = useSmartAuth();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -28,12 +30,6 @@ const HealthJourneyPortal = () => {
     }
   }, [verifyStateAndExchangeToken, isProcessingAuth]);
 
-  const emrSystems = [
-    { id: 'epic', name: 'EPIC' },
-    { id: 'cerner', name: 'Cerner' },
-    { id: 'allscripts', name: 'Allscripts' },
-    { id: 'meditech', name: 'MEDITECH' },
-  ];
 
   const handleEMRSelect = (value) => {
     setSelectedEMR(value);

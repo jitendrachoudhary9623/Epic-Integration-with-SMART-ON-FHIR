@@ -103,25 +103,25 @@ const Encounters: React.FC<EncountersProps> = ({ encounters }) => {
               <CardContent className="p-2">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="text-lg font-semibold text-indigo-700">{encounter.type[0]?.text}</h3>
-                    <p className="text-sm text-gray-600">{formatDate(encounter.period.start)}</p>
+                    <h3 className="text-lg font-semibold text-indigo-700">{encounter?.type[0]?.text}</h3>
+                    <p className="text-sm text-gray-600">{formatDate(encounter?.period?.start)}</p>
                   </div>
-                  <Badge variant="outline" className={getStatusColor(encounter.status)}>
-                    {encounter.status}
+                  <Badge variant="outline" className={getStatusColor(encounter?.status)}>
+                    {encounter?.status}
                   </Badge>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 mr-2 text-indigo-500" />
-                    {formatTime(encounter.period.start)}
+                    {formatTime(encounter?.period?.start)}
                   </div>
                   <div className="flex items-center">
                     <User className="h-4 w-4 mr-2 text-indigo-500" />
-                    {encounter.participant[0]?.individual.display || 'Unknown Provider'}
+                    {encounter?.participant?.[0]?.individual?.display || 'Unknown Provider'}
                   </div>
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 mr-2 text-indigo-500" />
-                    {encounter.location[0]?.location.display || 'Unknown Location'}
+                    {encounter.location?.[0]?.location.display || 'Unknown Location'}
                   </div>
                 </div>
                 <Dialog>
@@ -141,12 +141,12 @@ const Encounters: React.FC<EncountersProps> = ({ encounters }) => {
                     </DialogHeader>
                     {selectedEncounter && (
                       <div className="mt-4 space-y-2">
-                        <h3 className="text-lg font-semibold text-indigo-700">{selectedEncounter.type[0]?.text}</h3>
-                        <p><strong>Date:</strong> {formatDate(selectedEncounter?.period.start)}</p>
-                        <p><strong>Time:</strong> {formatTime(selectedEncounter?.period.start)}</p>
+                        <h3 className="text-lg font-semibold text-indigo-700">{selectedEncounter?.type[0]?.text}</h3>
+                        <p><strong>Date:</strong> {formatDate(selectedEncounter?.period?.start)}</p>
+                        <p><strong>Time:</strong> {formatTime(selectedEncounter?.period?.start)}</p>
                         <p><strong>Status:</strong> {selectedEncounter?.status}</p>
                         <p><strong>Provider:</strong> {selectedEncounter?.participant?.[0]?.individual.display || 'Unknown Provider'}</p>
-                        <p><strong>Location:</strong> {selectedEncounter?.location?.[0]?.location.display || 'Unknown Location'}</p>
+                        <p><strong>Location:</strong> {selectedEncounter?.location?.[0]?.location?.display || 'Unknown Location'}</p>
                         <p><strong>Reason:</strong> {selectedEncounter?.reasonCode?.[0]?.text || 'No reason provided'}</p>
                       </div>
                     )}

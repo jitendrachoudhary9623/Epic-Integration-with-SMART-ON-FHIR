@@ -100,10 +100,11 @@ export const usePatientData = () => {
           fetchPatientVitals(patientId, accessToken),
           fetchPatientLabReports(patientId, accessToken),
           fetchPatientEncounters(patientId, accessToken),
-            fetchPatientProcedures(patientId, accessToken)
+          fetchPatientProcedures(patientId, accessToken)
         ]);
 
         console.log({
+          patientData,
             procedureData
         })
         setPatient(patientData as Patient);
