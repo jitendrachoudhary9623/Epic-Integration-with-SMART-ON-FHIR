@@ -1,20 +1,15 @@
-import { Calendar, Pill, Activity, FileText } from 'lucide-react';
+import { Calendar, Pill, Activity, FileText, Clock, TrendingUp } from 'lucide-react';
 
 export const tabConfig = [
   {
     id: 'overview',
     label: 'Summary',
-    icon: FileText,
+    icon: TrendingUp,
   },
   {
-    id: 'appointments',
-    label: 'Appointments',
-    icon: Calendar,
-  },
-  {
-    id: 'medications',
-    label: 'Medications',
-    icon: Pill,
+    id: 'timeline',
+    label: 'Timeline',
+    icon: Clock,
   },
   {
     id: 'vitals',
@@ -22,18 +17,28 @@ export const tabConfig = [
     icon: Activity,
   },
   {
+    id: 'medications',
+    label: 'Medications',
+    icon: Pill,
+  },
+  {
+    id: 'appointments',
+    label: 'Appointments',
+    icon: Calendar,
+  },
+  {
     id: 'labReports',
     label: 'Lab Reports',
     icon: FileText,
   },
-    {
-        id: 'encounters',
-        label: 'Encounters',
-        icon: FileText,
-    },
-    {
-        id: 'procedures',
-        label: 'Procedures',
-        icon: FileText,
-    },
+  {
+    id: 'encounters',
+    label: 'Encounters',
+    icon: FileText,
+  },
+  {
+    id: 'procedures',
+    label: 'Procedures',
+    icon: FileText,
+  },
 ];

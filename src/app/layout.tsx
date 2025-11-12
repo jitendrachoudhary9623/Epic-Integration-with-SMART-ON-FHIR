@@ -7,6 +7,7 @@ import Login from '@/components/Login'
 import './globals.css'
 import  useAuth  from '@/hooks/useAuth'
 import useLayoutManager  from '@/hooks/useLayoutManager'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,7 +23,9 @@ export default function RootLayout({
     return (
       <html lang="en">
         <body className={inter.className}>
-          <Login />
+          <ThemeProvider>
+            <Login />
+          </ThemeProvider>
         </body>
       </html>
     )
@@ -31,15 +34,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="flex h-screen bg-gray-100">
-          {/* {showSidebar && <Sidebar />} */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* {showTopBar && <TopBar toggleSidebar={toggleSidebar} />} */}
-            <main className="flex-1 overflow-x-hidden overflow-y-auto">
-              {children}
-            </main>
+        <ThemeProvider>
+          <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+            {/* {showSidebar && <Sidebar />} */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* {showTopBar && <TopBar toggleSidebar={toggleSidebar} />} */}
+              <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
+        </ThemeProvider>
       </body>
     </html>
   )

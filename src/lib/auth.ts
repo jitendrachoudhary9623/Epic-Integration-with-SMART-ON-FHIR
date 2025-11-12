@@ -40,7 +40,16 @@ export const refreshToken = async () => {
 
   const tokens = await response.json();
   localStorage.setItem('access_token', tokens.access_token);
-  localStorage.setItem('expires_in', tokens.expires_in);
+  if (tokens.expires_in) {
+    localStorage.setItem('expires_in', tokens.expires_in.toString());
+    localStorage.setItem('token_timestamp', Date.now().toString());
+  }
+  if (tokens.id_token) {
+    localStorage.setItem('id_token', tokens.id_token);
+  }
+  if (tokens.refresh_token) {
+    localStorage.setItem('refresh_token', tokens.refresh_token);
+  }
   return parseInt(tokens.expires_in, 10);
 };
 
@@ -50,6 +59,8 @@ export const logout = () => {
   localStorage.removeItem('id_token');
   localStorage.removeItem('patient');
   localStorage.removeItem('expires_in');
+  localStorage.removeItem('token_timestamp');
+  localStorage.removeItem('scope');
   sessionStorage.removeItem('auth_state');
   sessionStorage.removeItem('code_verifier');
 };
@@ -80,10 +91,19 @@ export const exchangeCodeForToken = async (code: string) => {
 
   const tokens = await response.json();
   localStorage.setItem('access_token', tokens.access_token);
-  localStorage.setItem('refresh_token', tokens.refresh_token);
-  localStorage.setItem('id_token', tokens.id_token);
-  localStorage.setItem('patient', tokens.patient);
-  localStorage.setItem('expires_in', tokens.expires_in);
+  if (tokens.refresh_token) {
+    localStorage.setItem('refresh_token', tokens.refresh_token);
+  }
+  if (tokens.id_token) {
+    localStorage.setItem('id_token', tokens.id_token);
+  }
+  if (tokens.patient) {
+    localStorage.setItem('patient', tokens.patient);
+  }
+  if (tokens.expires_in) {
+    localStorage.setItem('expires_in', tokens.expires_in.toString());
+    localStorage.setItem('token_timestamp', Date.now().toString());
+  }
 
   sessionStorage.removeItem('auth_state');
   sessionStorage.removeItem('code_verifier');

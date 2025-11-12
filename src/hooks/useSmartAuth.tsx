@@ -2,8 +2,8 @@ import { useCallback, useState, useEffect } from 'react';
 import pkceChallenge from 'pkce-challenge';
 
 const SMART_AUTH_URL = process.env.NEXT_PUBLIC_SMART_AUTH_URL || '';
-const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID || '';
-const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || '';
+const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID || '1ad1e95a-d2d1-4a29-a87c-2082f1969a28';
+const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || 'http://localhost:3000';
 const FHIR_BASE_URL = process.env.NEXT_PUBLIC_FHIR_BASE_URL || '';
 const CERNER_TENANT_ID = process.env.NEXT_PUBLIC_CERNER_TENANT_ID || 'ec2458f2-1e24-41c8-b71b-0e701af7583d';
 const CERNER_CLIENT_ID = process.env.NEXT_PUBLIC_CERNER_CLIENT_ID || "127eeefe-be03-4c9a-b93a-11c3643e82d4";

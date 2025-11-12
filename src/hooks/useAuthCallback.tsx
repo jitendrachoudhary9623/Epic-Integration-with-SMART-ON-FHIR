@@ -100,14 +100,26 @@ export const useAuthCallback = (setStatus: (status: string) => void) => {
       }
 
       const tokens = await response.json();
-      
+
+      // Store all tokens and metadata
       localStorage.setItem('access_token', tokens.access_token);
-      localStorage.setItem('id_token', tokens.id_token);
+      if (tokens.id_token) {
+        localStorage.setItem('id_token', tokens.id_token);
+      }
+      if (tokens.refresh_token) {
+        localStorage.setItem('refresh_token', tokens.refresh_token);
+      }
       if (tokens.patient) {
         localStorage.setItem('patient', tokens.patient);
       }
-      localStorage.setItem('expires_in', tokens.expires_in);
-      localStorage.setItem('scope', tokens.scope);
+      if (tokens.expires_in) {
+        localStorage.setItem('expires_in', tokens.expires_in.toString());
+        // Store timestamp when token was received for expiration calculation
+        localStorage.setItem('token_timestamp', Date.now().toString());
+      }
+      if (tokens.scope) {
+        localStorage.setItem('scope', tokens.scope);
+      }
 
       sessionStorage.removeItem('auth_state');
       if (config.usesPKCE) {
