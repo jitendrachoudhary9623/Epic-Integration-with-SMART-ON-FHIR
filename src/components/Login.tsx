@@ -25,6 +25,10 @@ const HealthJourneyPortal = () => {
 
     if (code && state && !isProcessingAuth && !authInitiated.current) {
       authInitiated.current = true;
+
+      // Clear URL params immediately to prevent duplicate calls
+      window.history.replaceState({}, document.title, window.location.pathname);
+
       verifyStateAndExchangeToken(code, state);
       setStage(3);
     }

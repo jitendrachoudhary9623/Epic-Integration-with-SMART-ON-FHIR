@@ -142,14 +142,38 @@ const PatientInfoRenderer: React.FC<{ patient: Patient }> = ({ patient }) => {
 
   const formatName = (names: Name[] | undefined): string => {
     if (!names || names.length === 0) return 'N/A';
-    const name = names[0];
-    return `${name.given?.join(' ')} ${name.family}`.trim();
+
+    // Find the current name (no end date or most recent)
+    const currentName = names.find(n => {
+      const period = (n as any).period;
+      return !period || !period.end;
+    }) || names[0];
+
+    const givenNames = currentName.given?.join(' ') || '';
+    const familyName = currentName.family || '';
+    const suffix = (currentName as any).suffix?.join(' ') || '';
+
+    return `${givenNames} ${familyName} ${suffix}`.trim() || 'N/A';
   };
 
   const formatAddress = (addresses: Address[] | undefined): string => {
     if (!addresses || addresses.length === 0) return 'N/A';
-    const address = addresses[0];
-    return `${address.line?.join(', ')}, ${address.city}, ${address.state} ${address.postalCode}, ${address.country}`;
+
+    // Find current address (no end date or most recent)
+    const currentAddress = addresses.find(a => {
+      const period = (a as any).period;
+      return !period || !period.end;
+    }) || addresses[0];
+
+    const parts = [
+      currentAddress.line?.join(', '),
+      currentAddress.city,
+      currentAddress.state,
+      currentAddress.postalCode,
+      currentAddress.country
+    ].filter(Boolean);
+
+    return parts.join(', ') || 'N/A';
   };
 
   const getContactInfo = (telecoms: Telecom[] | undefined, system: string): string => {
@@ -158,8 +182,21 @@ const PatientInfoRenderer: React.FC<{ patient: Patient }> = ({ patient }) => {
   };
 
   const getLegalSex = (extensions: Extension[] | undefined): string => {
-    const legalSexExt = extensions?.find(ext => ext.url === "http://open.epic.com/FHIR/StructureDefinition/extension/legal-sex");
-    return legalSexExt?.valueCodeableConcept?.coding?.[0]?.display || 'N/A';
+    // Try Epic format first
+    let legalSexExt = extensions?.find(ext => ext.url === "http://open.epic.com/FHIR/StructureDefinition/extension/legal-sex");
+    if (legalSexExt?.valueCodeableConcept?.coding?.[0]?.display) {
+      return legalSexExt.valueCodeableConcept.coding[0].display;
+    }
+
+    // Try Athena/US Core birthsex format
+    legalSexExt = extensions?.find(ext => ext.url === "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex");
+    if (legalSexExt?.valueCode) {
+      const code = legalSexExt.valueCode;
+      const sexMap: Record<string, string> = { 'M': 'Male', 'F': 'Female', 'UNK': 'Unknown' };
+      return sexMap[code] || code;
+    }
+
+    return 'N/A';
   };
 
   const getRace = (extensions: Extension[] | undefined): string => {
@@ -236,7 +273,11 @@ const PatientInfoRenderer: React.FC<{ patient: Patient }> = ({ patient }) => {
                 <InfoSection
                   icon={<Heart className="h-5 w-5" />}
                   label="Marital Status"
-                  value={patient?.maritalStatus?.text || 'N/A'}
+                  value={
+                    patient?.maritalStatus?.text ||
+                    (patient?.maritalStatus as any)?.coding?.[0]?.display ||
+                    'N/A'
+                  }
                 />
                 <InfoSection
                   icon={<FileText className="h-5 w-5" />}
@@ -277,7 +318,11 @@ const PatientInfoRenderer: React.FC<{ patient: Patient }> = ({ patient }) => {
                 <InfoSection
                   icon={<User className="h-5 w-5" />}
                   label="General Practitioner"
-                  value={patient?.generalPractitioner?.[0]?.display || 'N/A'}
+                  value={
+                    patient?.generalPractitioner?.[0]?.display ||
+                    patient?.generalPractitioner?.[0]?.reference ||
+                    'N/A'
+                  }
                   tooltip="Your primary care doctor"
                 />
                 <InfoSection

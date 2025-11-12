@@ -7,6 +7,15 @@ const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || 'http://localhost:3
 const FHIR_BASE_URL = process.env.NEXT_PUBLIC_FHIR_BASE_URL || '';
 const CERNER_TENANT_ID = process.env.NEXT_PUBLIC_CERNER_TENANT_ID || 'ec2458f2-1e24-41c8-b71b-0e701af7583d';
 const CERNER_CLIENT_ID = process.env.NEXT_PUBLIC_CERNER_CLIENT_ID || "127eeefe-be03-4c9a-b93a-11c3643e82d4";
+const ALLSCRIPTS_CLIENT_ID = process.env.NEXT_PUBLIC_ALLSCRIPTS_CLIENT_ID || "237e3cb2-3760-4025-ba1b-309bc3ddf199";
+const ALLSCRIPTS_AUTH_URL = process.env.NEXT_PUBLIC_ALLSCRIPTS_AUTH_URL || '';
+const ALLSCRIPTS_FHIR_BASE_URL = process.env.NEXT_PUBLIC_ALLSCRIPTS_FHIR_BASE_URL || '';
+const ALLSCRIPTS_TOKEN_URL = process.env.NEXT_PUBLIC_ALLSCRIPTS_TOKEN_URL || '';
+const ATHENA_CLIENT_ID = process.env.NEXT_PUBLIC_ATHENA_CLIENT_ID || "0oatemfz4jQVLtuJq297";
+const ATHENA_AUTH_URL = process.env.NEXT_PUBLIC_ATHENA_AUTH_URL || 'https://api.preview.platform.athenahealth.com/oauth2/v1/authorize';
+const ATHENA_FHIR_BASE_URL = process.env.NEXT_PUBLIC_ATHENA_FHIR_BASE_URL || 'https://api.preview.platform.athenahealth.com/fhir/r4';
+const ATHENA_TOKEN_URL = process.env.NEXT_PUBLIC_ATHENA_TOKEN_URL || 'https://api.preview.platform.athenahealth.com/oauth2/v1/token';
+const ATHENA_REDIRECT_URI = process.env.NEXT_PUBLIC_ATHENA_REDIRECT_URI || REDIRECT_URI;
 
 type EMRConfig = {
   emr: string;
@@ -50,8 +59,58 @@ const emrConfigs: Record<string, EMRConfig> = {
       'patient/Encounter.read',
       'patient/LabResult.read'
     ],
+  },
+  "3": {
+    emr: 'Allscripts',
+    authUrl: ALLSCRIPTS_AUTH_URL,
+    clientId: ALLSCRIPTS_CLIENT_ID,
+    redirectUri: REDIRECT_URI,
+    fhirBaseUrl: ALLSCRIPTS_FHIR_BASE_URL,
+    scopes: [
+      'openid',
+      'profile',
+      'launch/patient',
+      'patient/Patient.read',
+      'patient/MedicationRequest.read',
+      'patient/Observation.read',
+      'patient/Appointment.read',
+      'patient/Encounter.read',
+      'patient/Procedure.read',
+      'patient/AllergyIntolerance.read',
+      'patient/Condition.read',
+      'patient/DiagnosticReport.read',
+      'offline_access'
+    ],
+  },
+  "5": {
+    emr: 'Athena',
+    authUrl: ATHENA_AUTH_URL,
+    clientId: ATHENA_CLIENT_ID,
+    redirectUri: ATHENA_REDIRECT_URI,
+    fhirBaseUrl: ATHENA_FHIR_BASE_URL,
+    scopes: [
+      'openid',
+      'fhirUser',
+      'profile',
+      'offline_access',
+      'launch/patient',
+      'patient/Patient.read',
+      'patient/Observation.read',
+      'patient/Condition.read',
+      'patient/AllergyIntolerance.read',
+      'patient/MedicationRequest.read',
+      'patient/Medication.read',
+      'patient/MedicationStatement.read',
+      'patient/Procedure.read',
+      'patient/Encounter.read',
+      'patient/DiagnosticReport.read',
+      'patient/Organization.read',
+      'patient/Location.read',
+      'patient/Practitioner.read',
+      'patient/Device.read',
+      'patient/Provenance.read',
+    ],
   }
-  // Add configurations for other EMR systems here
 };
 
 export const useSmartAuth = () => {
@@ -85,7 +144,7 @@ export const useSmartAuth = () => {
       aud: config.fhirBaseUrl,
     };
 
-    if (config.emr === 'Epic') {
+    if (config.emr === 'Epic' || config.emr === 'Athena') {
       params.code_challenge = code_challenge;
       params.code_challenge_method = 'S256';
     }
@@ -98,6 +157,12 @@ export const useSmartAuth = () => {
 
     sessionStorage.setItem('auth_state', state);
     sessionStorage.setItem('code_verifier', code_verifier);
+
+    // Debug logging for Athena
+    if (config.emr === 'Athena') {
+      console.log('Athena Authorization URL:', authorizationUrl.toString());
+      console.log('Athena Params:', params);
+    }
 
     return authorizationUrl.toString();
   }, []);

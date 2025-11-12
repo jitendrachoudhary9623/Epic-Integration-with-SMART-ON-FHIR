@@ -2,9 +2,14 @@ import { useCallback, useState, useRef, useEffect } from 'react';
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID || '7aada79d-32b6-4394-bd8c-d3acf38e3a88';
 const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || 'http://localhost:3000';
+const ATHENA_REDIRECT_URI = process.env.NEXT_PUBLIC_ATHENA_REDIRECT_URI || REDIRECT_URI;
 const EPIC_TOKEN_ENDPOINT = process.env.NEXT_PUBLIC_EPIC_TOKEN_URL || 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token';
 const CERNER_TOKEN_ENDPOINT = process.env.NEXT_PUBLIC_CERNER_TOKEN_URL || 'https://authorization.cerner.com/tenants/ec2458f2-1e24-41c8-b71b-0e701af7583d/hosts/fhir-myrecord.cerner.com/protocols/oauth2/profiles/smart-v1/token';
 const CERNER_CLIENT_ID = process.env.NEXT_PUBLIC_CERNER_CLIENT_ID || "127eeefe-be03-4c9a-b93a-11c3643e82d4";
+const ALLSCRIPTS_TOKEN_ENDPOINT = process.env.NEXT_PUBLIC_ALLSCRIPTS_TOKEN_URL || '';
+const ALLSCRIPTS_CLIENT_ID = process.env.NEXT_PUBLIC_ALLSCRIPTS_CLIENT_ID || "237e3cb2-3760-4025-ba1b-309bc3ddf199";
+const ATHENA_TOKEN_ENDPOINT = process.env.NEXT_PUBLIC_ATHENA_TOKEN_URL || 'https://api.preview.platform.athenahealth.com/oauth2/v1/token';
+const ATHENA_CLIENT_ID = process.env.NEXT_PUBLIC_ATHENA_CLIENT_ID || "0oatemfz4jQVLtuJq297";
 
 
 
@@ -12,6 +17,7 @@ type EMRConfig = {
   tokenEndpoint: string;
   clientId: string;
   usesPKCE: boolean;
+  redirectUri?: string;
 };
 
 const emrConfigs: Record<string, EMRConfig> = {
@@ -25,7 +31,17 @@ const emrConfigs: Record<string, EMRConfig> = {
     clientId: CERNER_CLIENT_ID,
     usesPKCE: false,
   },
-  // Add configurations for other EMR systems here
+  "3": { // Allscripts
+    tokenEndpoint: ALLSCRIPTS_TOKEN_ENDPOINT,
+    clientId: ALLSCRIPTS_CLIENT_ID,
+    usesPKCE: false,
+  },
+  "5": { // Athena
+    tokenEndpoint: ATHENA_TOKEN_ENDPOINT,
+    clientId: ATHENA_CLIENT_ID,
+    usesPKCE: true,
+    redirectUri: ATHENA_REDIRECT_URI,
+  },
 };
 
 export const useAuthCallback = (setStatus: (status: string) => void) => {
@@ -41,8 +57,12 @@ export const useAuthCallback = (setStatus: (status: string) => void) => {
   }, []);
 
   const verifyStateAndExchangeToken = useCallback(async (code: string, state: string) => {
-    if (isProcessingAuth) return;
+    if (isProcessingAuth) {
+      console.log('Already processing auth, skipping...');
+      return;
+    }
 
+    console.log('Starting token exchange...');
     setIsProcessingAuth(true);
     setStatus('Verifying...');
 
@@ -69,7 +89,7 @@ export const useAuthCallback = (setStatus: (status: string) => void) => {
         grant_type: 'authorization_code',
         code: code,
         client_id: config.clientId,
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: config.redirectUri || REDIRECT_URI,
       };
 
       if (config.usesPKCE) {
@@ -82,8 +102,10 @@ export const useAuthCallback = (setStatus: (status: string) => void) => {
         bodyParams.code_verifier = codeVerifier;
       }
 
-      console.log({
-        bodyParams
+      console.log('Token exchange params:', {
+        bodyParams,
+        endpoint: config.tokenEndpoint,
+        emr: selectedEMR
       })
 
       const response = await fetch(config.tokenEndpoint, {
@@ -96,10 +118,17 @@ export const useAuthCallback = (setStatus: (status: string) => void) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to exchange code for token');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Token exchange failed:', errorData);
+
+        if (errorData.error === 'Invalid Grant') {
+          throw new Error('Authorization code expired or already used. Please try logging in again.');
+        }
+        throw new Error(errorData.detailedmessage || errorData.error || 'Failed to exchange code for token');
       }
 
       const tokens = await response.json();
+      console.log('Token response:', tokens);
 
       // Store all tokens and metadata
       localStorage.setItem('access_token', tokens.access_token);
@@ -111,6 +140,35 @@ export const useAuthCallback = (setStatus: (status: string) => void) => {
       }
       if (tokens.patient) {
         localStorage.setItem('patient', tokens.patient);
+        console.log('Stored patient ID from token.patient:', tokens.patient);
+      } else {
+        console.warn('No patient ID in token.patient field');
+
+        // For Athena, patient context might be in a different location
+        // Try to extract from id_token or other fields
+        if (selectedEMR === '5' && tokens.id_token) {
+          try {
+            // Decode JWT to get patient info (simple base64 decode, not verification)
+            const tokenParts = tokens.id_token.split('.');
+            if (tokenParts.length >= 2) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              console.log('ID Token payload:', payload);
+
+              // Check various possible locations for patient ID
+              const possiblePatientId = payload.patient ||
+                                       payload.sub ||
+                                       payload.patientId ||
+                                       payload.fhirUser?.split('/').pop();
+
+              if (possiblePatientId) {
+                localStorage.setItem('patient', possiblePatientId);
+                console.log('Extracted patient ID from id_token:', possiblePatientId);
+              }
+            }
+          } catch (e) {
+            console.error('Failed to parse id_token:', e);
+          }
+        }
       }
       if (tokens.expires_in) {
         localStorage.setItem('expires_in', tokens.expires_in.toString());
