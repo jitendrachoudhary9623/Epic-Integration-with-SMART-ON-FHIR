@@ -10,6 +10,9 @@ const ALLSCRIPTS_TOKEN_ENDPOINT = process.env.NEXT_PUBLIC_ALLSCRIPTS_TOKEN_URL |
 const ALLSCRIPTS_CLIENT_ID = process.env.NEXT_PUBLIC_ALLSCRIPTS_CLIENT_ID || "237e3cb2-3760-4025-ba1b-309bc3ddf199";
 const ATHENA_TOKEN_ENDPOINT = process.env.NEXT_PUBLIC_ATHENA_TOKEN_URL || 'https://api.preview.platform.athenahealth.com/oauth2/v1/token';
 const ATHENA_CLIENT_ID = process.env.NEXT_PUBLIC_ATHENA_CLIENT_ID || "0oatemfz4jQVLtuJq297";
+const NEXTGEN_TOKEN_ENDPOINT = process.env.NEXT_PUBLIC_NEXTGEN_TOKEN_URL || 'https://fhir.nextgen.com/nge/prod/patient-oauth/token';
+const NEXTGEN_CLIENT_ID = process.env.NEXT_PUBLIC_NEXTGEN_CLIENT_ID || '';
+const NEXTGEN_CLIENT_SECRET = process.env.NEXT_PUBLIC_NEXTGEN_CLIENT_SECRET || '';
 
 
 
@@ -18,6 +21,7 @@ type EMRConfig = {
   clientId: string;
   usesPKCE: boolean;
   redirectUri?: string;
+  clientSecret?: string;
 };
 
 const emrConfigs: Record<string, EMRConfig> = {
@@ -41,6 +45,12 @@ const emrConfigs: Record<string, EMRConfig> = {
     clientId: ATHENA_CLIENT_ID,
     usesPKCE: true,
     redirectUri: ATHENA_REDIRECT_URI,
+  },
+  "6": { // NextGen
+    tokenEndpoint: NEXTGEN_TOKEN_ENDPOINT,
+    clientId: NEXTGEN_CLIENT_ID,
+    usesPKCE: false,
+    clientSecret: NEXTGEN_CLIENT_SECRET,
   },
 };
 
@@ -100,6 +110,11 @@ export const useAuthCallback = (setStatus: (status: string) => void) => {
           return;
         }
         bodyParams.code_verifier = codeVerifier;
+      }
+
+      // Add client_secret for EMRs that require it (like NextGen)
+      if (config.clientSecret) {
+        bodyParams.client_secret = config.clientSecret;
       }
 
       console.log('Token exchange params:', {

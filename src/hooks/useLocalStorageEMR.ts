@@ -12,6 +12,7 @@ export const useLocalStorageEMR = (): [EMR[], string, React.Dispatch<React.SetSt
     { id: '3', name: 'Allscripts' },
     { id: '4', name: 'Meditech' },
     { id: '5', name: 'Athena' },
+    { id: '6', name: 'NextGen' },
   ];
 
   const [selectedEMR, setSelectedEMR] = useState<string>(() => {

@@ -16,6 +16,10 @@ const ATHENA_AUTH_URL = process.env.NEXT_PUBLIC_ATHENA_AUTH_URL || 'https://api.
 const ATHENA_FHIR_BASE_URL = process.env.NEXT_PUBLIC_ATHENA_FHIR_BASE_URL || 'https://api.preview.platform.athenahealth.com/fhir/r4';
 const ATHENA_TOKEN_URL = process.env.NEXT_PUBLIC_ATHENA_TOKEN_URL || 'https://api.preview.platform.athenahealth.com/oauth2/v1/token';
 const ATHENA_REDIRECT_URI = process.env.NEXT_PUBLIC_ATHENA_REDIRECT_URI || REDIRECT_URI;
+const NEXTGEN_CLIENT_ID = process.env.NEXT_PUBLIC_NEXTGEN_CLIENT_ID || '';
+const NEXTGEN_AUTH_URL = process.env.NEXT_PUBLIC_NEXTGEN_AUTH_URL || 'https://fhir.nextgen.com/nge/prod/patient-oauth/authorize';
+const NEXTGEN_FHIR_BASE_URL = process.env.NEXT_PUBLIC_NEXTGEN_FHIR_BASE_URL || 'https://fhir.nextgen.com/nge/prod/fhir-api-r4/fhir/r4/';
+const NEXTGEN_TOKEN_URL = process.env.NEXT_PUBLIC_NEXTGEN_TOKEN_URL || 'https://fhir.nextgen.com/nge/prod/patient-oauth/token';
 
 type EMRConfig = {
   emr: string;
@@ -109,6 +113,29 @@ const emrConfigs: Record<string, EMRConfig> = {
       'patient/Practitioner.read',
       'patient/Device.read',
       'patient/Provenance.read',
+    ],
+  },
+  "6": {
+    emr: 'NextGen',
+    authUrl: NEXTGEN_AUTH_URL,
+    clientId: NEXTGEN_CLIENT_ID,
+    redirectUri: REDIRECT_URI,
+    fhirBaseUrl: NEXTGEN_FHIR_BASE_URL,
+    scopes: [
+      'openid',
+      'fhirUser',
+      'profile',
+      'offline_access',
+      'launch/patient',
+      'patient/Patient.read',
+      'patient/AllergyIntolerance.read',
+      'patient/Condition.read',
+      'patient/MedicationRequest.read',
+      'patient/Observation.read',
+      'patient/DiagnosticReport.read',
+      'patient/Appointment.read',
+      'patient/Encounter.read',
+      'patient/Procedure.read',
     ],
   }
 };
