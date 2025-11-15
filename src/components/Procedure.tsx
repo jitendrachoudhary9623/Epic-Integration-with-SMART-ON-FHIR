@@ -29,7 +29,7 @@ const ProcedureDetail = ({ icon: Icon, label, value }) => (
   </div>
 );
 
-const Procedure = ({ procedure }) => {
+const ProcedureCard = ({ procedure }) => {
   console.log({procedure});
 
   const formatDate = (dateString) => {
@@ -141,7 +141,7 @@ const ProcedureList = ({ procedures }) => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {procedures.map((procedure, index) => (
-          <Procedure key={index} procedure={procedure} />
+          <ProcedureCard key={index} procedure={procedure} />
         ))}
       </div>
     );

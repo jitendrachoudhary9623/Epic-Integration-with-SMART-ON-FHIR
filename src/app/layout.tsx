@@ -5,9 +5,10 @@ import Sidebar from '@/components/Sidebar'
 import TopBar from '@/components/TopBar'
 import Login from '@/components/Login'
 import './globals.css'
-import  useAuth  from '@/hooks/useAuth'
-import useLayoutManager  from '@/hooks/useLayoutManager'
+import useAuth from '@/hooks/useAuth'
+import useLayoutManager from '@/hooks/useLayoutManager'
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import './sdk-init' // Initialize FHIR SDK
 
 const inter = Inter({ subsets: ['latin'] })
 

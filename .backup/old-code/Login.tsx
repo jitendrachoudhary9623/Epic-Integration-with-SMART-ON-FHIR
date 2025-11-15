@@ -1,125 +1,50 @@
-/**
- * Login Component - Refactored with FHIR SDK
- *
- * This replaces the old Login component with SDK-powered authentication.
- * No more manual OAuth handling, PKCE, or EMR-specific logic!
- */
-
-'use client';
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Lock, Activity, Server, CheckCircle, Heart, ChevronRight, Info } from 'lucide-react';
+import { FileText, Lock, Activity, Server, CheckCircle, Heart, ChevronRight, Info, Hospital } from 'lucide-react';
+import { useSmartAuth } from '@/hooks/useSmartAuth';
+import { useAuthCallback } from '@/hooks/useAuthCallback';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAuth, emrRegistry } from '@/sdk';
-import { useRouter } from 'next/navigation';
+import { useLocalStorageEMR } from '@/hooks/useLocalStorageEMR';
 
 const HealthJourneyPortal = () => {
-  const router = useRouter();
-  const [selectedProviderId, setSelectedProviderId] = useState('');
-  const [callbackProviderId, setCallbackProviderId] = useState<string | null>(null);
-  const [stage, setStage] = useState(0);
+  // const [selectedEMR, setSelectedEMR] = useState('');
   const [status, setStatus] = useState('');
+  const { verifyStateAndExchangeToken, isProcessingAuth } = useAuthCallback(setStatus);
+  const [stage, setStage] = useState(0);
   const authInitiated = useRef(false);
+  const [emrSystems, selectedEMR, setSelectedEMR] = useLocalStorageEMR();
+  const { handleLogin } = useSmartAuth();
 
-  // Check for OAuth callback and determine provider ID
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
 
-    if (code && state && !authInitiated.current) {
-      // Get provider ID from sessionStorage (set during authorize)
-      const sessionProviderId = sessionStorage.getItem('fhir_sdk_auth_provider_id');
+    if (code && state && !isProcessingAuth && !authInitiated.current) {
+      authInitiated.current = true;
 
-      if (sessionProviderId) {
-        setCallbackProviderId(sessionProviderId);
-        authInitiated.current = true;
-      }
-    } else {
-      // Not a callback, load saved provider ID for login
-      const savedProviderId = localStorage.getItem('selected_provider_id');
-      if (savedProviderId) {
-        setSelectedProviderId(savedProviderId);
-      }
-    }
-  }, []);
-
-  const providers = emrRegistry.listProviders();
-
-  // Get auth client - use callback provider ID if handling callback, otherwise use selected
-  const effectiveProviderId = callbackProviderId || selectedProviderId || 'epic';
-  const authClient = useAuth(effectiveProviderId);
-
-  // Handle OAuth callback
-  useEffect(() => {
-    if (!callbackProviderId) return;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-
-    if (code && state) {
-      setStage(3);
-      setStatus('Processing authentication...');
-
-      // Save the full callback URL BEFORE clearing it
-      const callbackUrl = window.location.href;
-
-      // Clear URL params immediately
+      // Clear URL params immediately to prevent duplicate calls
       window.history.replaceState({}, document.title, window.location.pathname);
 
-      // Handle callback with SDK using saved URL
-      authClient.handleCallback(callbackUrl)
-        .then(() => {
-          setStatus('Authentication successful! Redirecting...');
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 1000);
-        })
-        .catch((error) => {
-          console.error('Authentication failed:', error);
-          setStatus(`Authentication failed: ${error.message}`);
-          setStage(0);
-          setCallbackProviderId(null);
-          authInitiated.current = false;
-        });
+      verifyStateAndExchangeToken(code, state);
+      setStage(3);
     }
-  }, [callbackProviderId, authClient, router]);
+  }, [verifyStateAndExchangeToken, isProcessingAuth]);
 
-  // Check if already authenticated
-  useEffect(() => {
-    // Check if we have tokens in storage
-    const hasAccessToken = localStorage.getItem('fhir_sdk_access_token');
-    const hasProviderId = localStorage.getItem('selected_provider_id');
 
-    if (hasAccessToken && hasProviderId) {
-      console.log('✅ Already authenticated, redirecting to dashboard...');
-      router.push('/dashboard');
-    }
-  }, [router]);
-
-  const handleEMRSelect = (providerId: string) => {
-    setSelectedProviderId(providerId);
-    localStorage.setItem('selected_provider_id', providerId);
+  const handleEMRSelect = (value) => {
+    setSelectedEMR(value);
     setStage(1);
   };
 
-  const handleConnectClick = async () => {
+  const handleConnectClick = () => {
     setStage(2);
-    setStatus('Initiating secure connection...');
-
-    try {
-      // SDK handles all OAuth, PKCE, and EMR-specific logic!
-      await authClient.login();
-    } catch (error) {
-      console.error('Login failed:', error);
-      setStatus(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setStage(0);
-    }
+    setTimeout(() => {
+      handleLogin();
+    }, 1500);
   };
 
   const stageConfig = [
@@ -142,22 +67,19 @@ const HealthJourneyPortal = () => {
           >
             <h3 className="text-xl font-semibold">Welcome to Your Health Journey</h3>
             <p>This portal allows you to securely access and manage your medical records from various healthcare providers. Let's get started by selecting your EMR system.</p>
-            <Select onValueChange={handleEMRSelect} value={selectedProviderId}>
+            <Select onValueChange={handleEMRSelect}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select your EMR system" />
               </SelectTrigger>
               <SelectContent>
-                {providers.map((provider) => (
-                  <SelectItem key={provider.id} value={provider.id}>
-                    {provider.name}
-                  </SelectItem>
+                {emrSystems.map((emr) => (
+                  <SelectItem key={emr.id} value={emr.id}>{emr.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </motion.div>
         );
       case 1:
-        const selectedProvider = providers.find(p => p.id === selectedProviderId);
         return (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -167,12 +89,11 @@ const HealthJourneyPortal = () => {
             className="space-y-6"
           >
             <h3 className="text-xl font-semibold">Secure Connection</h3>
-            <p>You've selected {selectedProvider?.name}. We're ready to establish a secure connection to access your medical records.</p>
+            <p>You've selected {emrSystems.find(emr => emr.id === selectedEMR)?.name}. We're ready to establish a secure connection to access your medical records.</p>
             <ul className="list-disc list-inside space-y-2">
               <li>Your data is encrypted end-to-end</li>
               <li>We comply with HIPAA regulations</li>
               <li>You control who sees your information</li>
-              <li>SMART on FHIR compliant authentication</li>
             </ul>
             <Button className="w-full" onClick={handleConnectClick}>
               <Lock className="mr-2 h-4 w-4" /> Connect Securely
@@ -191,7 +112,6 @@ const HealthJourneyPortal = () => {
             <Activity className="h-16 w-16 text-purple-500 mx-auto animate-pulse" />
             <h3 className="text-xl font-semibold">Establishing Secure Connection</h3>
             <p>We're securely connecting to your EMR system. This process ensures your data remains protected.</p>
-            <p className="text-sm text-gray-500">{status}</p>
           </motion.div>
         );
       case 3:
@@ -209,7 +129,9 @@ const HealthJourneyPortal = () => {
                 <Activity className="h-16 w-16 text-green-500 animate-pulse" />
               </div>
             </div>
-            <p className="text-center">{status}</p>
+            <p className="text-center">
+              {status || "We're securely verifying your credentials and establishing a protected connection to your EMR."}
+            </p>
             <ul className="text-sm text-gray-600 space-y-2">
               <li className="flex items-center justify-center">
                 <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
@@ -233,6 +155,17 @@ const HealthJourneyPortal = () => {
         return null;
     }
   };
+
+  // if (status) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+  //       <div className="bg-white p-8 rounded-lg shadow-xl">
+  //         <h2 className="text-2xl font-bold mb-4">Authentication in Progress</h2>
+  //         <p>{status}</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex">
@@ -271,7 +204,7 @@ const HealthJourneyPortal = () => {
             </div>
 
             <AnimatePresence mode="wait">
-              {renderStageContent()}
+              { status ? renderStageContent(): renderStageContent() }
             </AnimatePresence>
           </CardContent>
         </Card>
@@ -287,7 +220,7 @@ const HealthJourneyPortal = () => {
             { icon: Activity, text: "Real-time Health Insights" },
             { icon: Info, text: "Educational Resources" },
           ].map((item, index) => (
-            <motion.li
+            <motion.li 
               key={index}
               className="flex items-center space-x-3"
               initial={{ opacity: 0, x: -20 }}

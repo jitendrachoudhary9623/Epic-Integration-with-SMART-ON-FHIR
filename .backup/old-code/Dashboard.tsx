@@ -1,13 +1,4 @@
-/**
- * Dashboard Component - Refactored with FHIR SDK
- *
- * This replaces usePatientData hook with the SDK's useFHIR hook.
- * All data fetching, token management, and error handling is automatic!
- */
-
-'use client';
-
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Bell, Calendar, Pill, Activity, FileText, Stethoscope, ChevronRight, Plus } from 'lucide-react';
 import Appointments from './Appointments';
@@ -20,6 +11,9 @@ import Procedure from './Procedure';
 import HealthTrendsChart from './HealthTrendsChart';
 import MedicalTimeline from './MedicalTimeline';
 import HealthInsights from './HealthInsights';
+import { logout } from '@/lib/auth';
+import { usePatientData } from '@/hooks/usePatientData';
+import { useSessionTimer } from '@/hooks/useSessionTimer';
 import { tabConfig } from '@/config/tabConfig';
 import PatientInfoRenderer from './PatientInfoRenderer';
 import DashboardHeader from "./DashboardHeader";
@@ -31,7 +25,6 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from 'framer-motion';
-import { useFHIR } from '@/sdk';
 
 const Shimmer: React.FC<{ className?: string }> = ({ className }) => (
   <div className={`animate-pulse bg-gray-200 ${className}`} />
@@ -59,7 +52,6 @@ const TabContentShimmer = () => (
     ))}
   </div>
 );
-
 const QuickActionCard = ({ icon: Icon, title, description, onClick }) => (
   <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
     <CardContent className="flex items-center p-4">
@@ -102,79 +94,17 @@ const NotificationCard = ({ title, date, isNew }) => (
 const Dashboard = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
+  const { patient, appointments, medications, vitals, labReports, isLoading, encounters, procedures } = usePatientData();
+  const { expiryTime, formatTime } = useSessionTimer();
 
-  // Get provider ID from storage
-  const [providerId, setProviderId] = useState<string>('');
-
-  useEffect(() => {
-    const savedProviderId = localStorage.getItem('selected_provider_id') || 'epic';
-    setProviderId(savedProviderId);
-  }, []);
-
-  // 🎉 ONE HOOK TO RULE THEM ALL! 🎉
-  // This replaces: usePatientData, useFetchPatientData, useAuth, all API calls!
-  const {
-    // Auth
-    isAuthenticated,
-    isAuthLoading,
-    logout: sdkLogout,
-
-    // All patient data - automatically fetched!
-    patient,
-    medications,
-    vitals,
-    labReports,
-    appointments,
-    encounters,
-    procedures,
-
-    // Loading and errors
-    isDataLoading,
-    errors,
-    refetch,
-  } = useFHIR(providerId || 'epic');
-
-  // Session timer - calculate from token expiry
-  const [expiryTime, setExpiryTime] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState<string>('');
-
-  useEffect(() => {
-    const tokenExpiry = localStorage.getItem('fhir_sdk_token_expiry');
-    if (tokenExpiry) {
-      setExpiryTime(parseInt(tokenExpiry, 10));
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (!expiryTime) return;
-
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const diff = expiryTime - now;
-
-      if (diff <= 0) {
-        setTimeLeft('Session expired');
-        handleLogout();
-      } else {
-        const minutes = Math.floor(diff / 60000);
-        const seconds = Math.floor((diff % 60000) / 1000);
-        setTimeLeft(`${minutes}:${seconds.toString().padStart(2, '0')}`);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [expiryTime]);
-
-  const handleLogout = useCallback(async () => {
-    await sdkLogout();
+  const handleLogout = useCallback(() => {
+    logout();
     router.push('/');
-  }, [sdkLogout, router]);
+  }, [router]);
 
   const handleTabChange = useCallback((value: string) => {
     setActiveTab(value);
   }, []);
-
-  const formatTime = useCallback(() => timeLeft, [timeLeft]);
 
   const tabContent = useMemo(() => ({
     overview: (
@@ -249,20 +179,6 @@ const Dashboard = () => {
             </motion.div>
           ))}
         </div>
-
-        {/* Show errors if any */}
-        {Object.keys(errors).length > 0 && (
-          <Card className="bg-yellow-50 border-yellow-200">
-            <CardContent className="p-4">
-              <h3 className="font-semibold text-yellow-800 mb-2">Some data couldn't be loaded:</h3>
-              <ul className="text-sm text-yellow-700">
-                {Object.entries(errors).map(([key, msg]) => (
-                  <li key={key}>• {key}: {msg}</li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        )}
       </div>
     ),
     vitals: (
@@ -288,25 +204,7 @@ const Dashboard = () => {
         procedures={procedures}
       />
     ),
-  }), [vitals, medications, labReports, procedures, appointments, encounters, patient, setActiveTab, errors]);
-
-  // Show loading if auth is being checked
-  if (isAuthLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Activity className="h-16 w-16 animate-spin mx-auto mb-4" />
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if not authenticated
-  if (!isAuthenticated) {
-    router.push('/');
-    return null;
-  }
+  }), [vitals, medications, labReports, procedures, appointments, encounters, patient, setActiveTab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex flex-col transition-colors duration-300">
@@ -319,7 +217,7 @@ const Dashboard = () => {
         <aside className="w-full lg:w-1/4 space-y-4 sm:space-y-6">
           <Card>
             <CardContent className="p-4 sm:p-6">
-              {isDataLoading ? (
+              {isLoading ? (
                 <PatientInfoShimmer />
               ) : (
                 <>
@@ -334,13 +232,6 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <PatientInfoRenderer patient={patient} />
-                  <Button
-                    variant="outline"
-                    className="w-full mt-4"
-                    onClick={() => refetch()}
-                  >
-                    Refresh Data
-                  </Button>
                 </>
               )}
             </CardContent>
@@ -376,7 +267,7 @@ const Dashboard = () => {
                 {Object.entries(tabContent).map(([key, content]) => (
                   <TabsContent key={key} value={key}>
                     <ScrollArea className="h-[calc(100vh-16rem)] sm:h-[calc(100vh-12rem)]">
-                      {isDataLoading ? <TabContentShimmer /> : content}
+                      {isLoading ? <TabContentShimmer /> : content}
                     </ScrollArea>
                   </TabsContent>
                 ))}
