@@ -5,7 +5,7 @@
  * SDK has NO hardcoded configs - it just uses what you give it.
  */
 
-import { emrRegistry } from '@/sdk';
+import { emrRegistry } from '@nirmiteeio/fhir-sdk';
 import { getConfiguredEMRs } from './emr-configs';
 
 // Get EMR configs from your app (from env vars or API)

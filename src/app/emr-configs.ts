@@ -7,8 +7,8 @@
  * PRODUCTION: Replace this with API call to fetch from database
  */
 
-import type { EMRProviderConfig } from '@/sdk';
-import { HTTP_STATUS } from '@/sdk';
+import type { EMRProviderConfig } from '@nirmiteeio/fhir-sdk';
+import { HTTP_STATUS } from '@nirmiteeio/fhir-sdk';
 
 /**
  * Your EMR Configurations

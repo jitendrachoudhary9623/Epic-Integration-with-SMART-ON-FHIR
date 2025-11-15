@@ -19,6 +19,7 @@
     "@headlessui/react": "^2.1.1",
     "@heroicons/react": "v1",
     "@hookform/resolvers": "^3.9.0",
+    "@nirmiteeio/fhir-sdk": "^1.0.1",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.1",

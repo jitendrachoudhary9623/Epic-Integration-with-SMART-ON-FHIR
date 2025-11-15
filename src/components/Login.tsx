@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAuth, emrRegistry } from '@/sdk';
+import { useAuth, emrRegistry } from '@nirmiteeio/fhir-sdk';
 import { useRouter } from 'next/navigation';
 
 const HealthJourneyPortal = () => {
