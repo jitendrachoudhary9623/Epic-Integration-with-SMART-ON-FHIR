@@ -1,8 +1,19 @@
 /**
  * Pre-configured EMR Provider Definitions
+ *
+ * ⚠️ IMPORTANT: These are EXAMPLES ONLY for reference/testing.
+ *
+ * In production, you should:
+ * 1. Define your own configs with YOUR scopes
+ * 2. Fetch configs from your database/API
+ * 3. Pass them via emrRegistry.registerProvider(yourConfig)
+ *
+ * The SDK does NOT use these unless you explicitly import them.
+ * SDK is 100% generic - it uses whatever config YOU provide.
  */
 
 import type { EMRProviderConfig } from '../types';
+import { HTTP_STATUS } from '../types/http-status';
 
 export const EPIC_PROVIDER: EMRProviderConfig = {
   id: 'epic',
@@ -177,7 +188,7 @@ export const ATHENA_PROVIDER: EMRProviderConfig = {
   quirks: {
     acceptHeader: 'application/fhir+json',
     patientIdLocation: 'id_token.fhirUser',
-    notFoundStatusCodes: [403],
+    notFoundStatusCodes: [HTTP_STATUS.FORBIDDEN],
     filterByResourceType: true,
     supportsPagination: true,
     tokenParsingStrategy: 'jwt',

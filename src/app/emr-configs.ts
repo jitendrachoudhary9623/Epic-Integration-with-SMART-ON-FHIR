@@ -8,6 +8,7 @@
  */
 
 import type { EMRProviderConfig } from '@/sdk';
+import { HTTP_STATUS } from '@/sdk';
 
 /**
  * Your EMR Configurations
@@ -123,7 +124,7 @@ export const EMR_CONFIGS: EMRProviderConfig[] = [
     quirks: {
       acceptHeader: 'application/fhir+json',
       patientIdLocation: 'id_token.fhirUser',
-      notFoundStatusCodes: [403],
+      notFoundStatusCodes: [HTTP_STATUS.FORBIDDEN],
       filterByResourceType: true,
       supportsPagination: true,
       tokenParsingStrategy: 'jwt',

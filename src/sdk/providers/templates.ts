@@ -2,6 +2,22 @@
  * EMR Provider Templates
  * Base configurations without hardcoded credentials
  * Frontend passes clientId, redirectUri, and custom params
+ *
+ * ⚠️ IMPORTANT: Templates are OPTIONAL convenience helpers.
+ *
+ * Scopes in templates are COMMON defaults - override them as needed:
+ * ```typescript
+ * initializeSDK([{
+ *   providerId: 'epic',
+ *   clientId: 'xxx',
+ *   redirectUri: 'xxx',
+ *   customConfig: {
+ *     scopes: ['YOUR', 'CUSTOM', 'SCOPES']  // ← Override template scopes
+ *   }
+ * }]);
+ * ```
+ *
+ * For full control, use emrRegistry.registerProvider() with complete config.
  */
 
 import type { EMRProviderConfig } from '../types';
